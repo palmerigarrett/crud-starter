@@ -15,37 +15,41 @@ const pool = new Pool({
     port: 5432, // default port for PostgreSQL
 });
 
-pool.query('CREATE SCHEMA reactquery', (err, res) => {
-  if (err) {
-    if (err.message.includes('schema "reactquery" already exists')) {
-      console.error('Schema "reactquery" already Exists');
+const createTable = () => {
+  pool.query(
+    `CREATE TABLE reactquery."BLOGPOST" (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255),
+      author VARCHAR(255),
+      content TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`, (err, res) => {
+    if (err) {
+      if (err.message.includes('relation "BLOGPOST" already exists')) {
+        console.error('Table "BLOGPOST" already Exists');
+      } else {
+        console.error('error creating table BLOGPOST:', err.stack);
+      }
     } else {
-      console.error('error creating schema:', err);
+        console.log('Table BLOGPOST created');
     }
-  } else {
-    console.log('Schema created successfully');
-  }
-});
+  });
+};
 
-pool.query(
-  `CREATE TABLE reactQuery."BLOGPOST" (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255),
-    author VARCHAR(255),
-    content TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)`, (err, res) => {
-  if (err) {
-    if (err.message.includes('relation "BLOGPOST" already exists')) {
-      console.error('Table "BLOGPOST" already Exists');
+const createSchema = () => {
+  pool.query('CREATE SCHEMA reactquery', (err, res) => {
+    if (err) {
+      if (err.message.includes('schema "reactquery" already exists')) {
+        console.error('Schema "reactquery" already Exists');
+      } else {
+        console.error('error creating schema:', err);
+      }
     } else {
-      console.error('error creating table BLOGPOST:', err.stack);
+      console.log('Schema created successfully');
+      createTable();
     }
-  } else {
-      console.log('Table BLOGPOST created');
-  }
-});
-
+  });
+};
 
 app.get('/blogposts', (req, res) => {
   pool.query('SELECT * FROM reactQuery."BLOGPOST"', (err, result) => {
@@ -122,4 +126,5 @@ app.delete('/blogpost/:id', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  createSchema();
 });
